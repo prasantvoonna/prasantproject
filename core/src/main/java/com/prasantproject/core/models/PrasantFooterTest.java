@@ -15,8 +15,9 @@
  */
 package com.prasantproject.core.models;
 
-import com.day.cq.wcm.api.Page;
-import com.day.cq.wcm.api.PageManager;
+import com.adobe.cq.dam.cfm.ContentElement;
+import com.adobe.cq.dam.cfm.ContentFragment;
+import com.adobe.cq.dam.cfm.ContentVariation;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.models.annotations.Default;
@@ -30,7 +31,6 @@ import org.apache.sling.settings.SlingSettingsService;
 import javax.annotation.PostConstruct;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Optional;
 
 import static org.apache.sling.api.resource.ResourceResolver.PROPERTY_RESOURCE_TYPE;
 
@@ -48,25 +48,36 @@ public class PrasantFooterTest {
     @SlingObject
     private ResourceResolver resourceResolver;
 
-    private String message;
+    private String currentYear;
+
+    private String currentYearFromCF;
 
     @PostConstruct
     protected void init() {
-        PageManager pageManager = resourceResolver.adaptTo(PageManager.class);
-        String currentPagePath = Optional.ofNullable(pageManager)
-                .map(pm -> pm.getContainingPage(currentResource))
-                .map(Page::getPath).orElse("");
-
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy");
         LocalDateTime now = LocalDateTime.now();
         System.out.println(dtf.format(now));
 
-        message = "Hello Prasant!\n"
-                + "CopyRight@" + dtf.format(now) ;
+        currentYear =   dtf.format(now) ;
+
+       Resource fragmentResource = resourceResolver.getResource("/content/dam/prasantproject/copyrightyearCF");
+
+        //Adapt it to a fragment resource
+        if (fragmentResource != null) {
+            ContentFragment cf = fragmentResource.adaptTo(ContentFragment.class);
+            // the resource is now accessible through the API
+            ContentElement title = cf.getElement("CopyRightYear");
+            ContentVariation masterVariation = title.getVariation("master");
+            currentYearFromCF = masterVariation.getContent();
+        }
     }
 
-    public String getMessage() {
-        return message;
+    public String getCurrentYear() {
+        return currentYear;
+    }
+
+    public String getCurrentYearFromCF() {
+        return currentYearFromCF;
     }
 
 }
